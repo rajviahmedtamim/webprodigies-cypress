@@ -1,0 +1,27 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1703855867070,
+      "tag": "0000_amused_ultimatum",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1703858854702,
+      "tag": "0001_curved_magneto",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1703859950712,
+      "tag": "0002_yummy_toxin",
+      "breakpoints": true
+    }
+  ]
+}
