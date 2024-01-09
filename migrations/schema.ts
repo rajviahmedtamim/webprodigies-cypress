@@ -10,8 +10,8 @@ import {
   bigint,
   integer,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 
+import { relations, sql } from "drizzle-orm";
 export const keyStatus = pgEnum("key_status", [
   "expired",
   "invalid",
@@ -31,8 +31,8 @@ export const keyType = pgEnum("key_type", [
   "aead-det",
   "aead-ietf",
 ]);
-export const factorType = pgEnum("factor_type", ["webauthn", "totp"]);
 export const factorStatus = pgEnum("factor_status", ["verified", "unverified"]);
+export const factorType = pgEnum("factor_type", ["webauthn", "totp"]);
 export const aalLevel = pgEnum("aal_level", ["aal3", "aal2", "aal1"]);
 export const codeChallengeMethod = pgEnum("code_challenge_method", [
   "plain",
@@ -53,6 +53,22 @@ export const subscriptionStatus = pgEnum("subscription_status", [
   "canceled",
   "active",
   "trialing",
+]);
+export const equalityOp = pgEnum("equality_op", [
+  "in",
+  "gte",
+  "gt",
+  "lte",
+  "lt",
+  "neq",
+  "eq",
+]);
+export const action = pgEnum("action", [
+  "ERROR",
+  "TRUNCATE",
+  "DELETE",
+  "UPDATE",
+  "INSERT",
 ]);
 
 export const workspaces = pgTable("workspaces", {
@@ -117,15 +133,6 @@ export const customers = pgTable("customers", {
   stripeCustomerId: text("stripe_customer_id"),
 });
 
-export const products = pgTable("products", {
-  id: text("id").primaryKey().notNull(),
-  active: boolean("active"),
-  name: text("name"),
-  description: text("description"),
-  image: text("image"),
-  metadata: jsonb("metadata"),
-});
-
 export const prices = pgTable("prices", {
   id: text("id").primaryKey().notNull(),
   productId: text("product_id").references(() => products.id),
@@ -141,14 +148,21 @@ export const prices = pgTable("prices", {
   metadata: jsonb("metadata"),
 });
 
+export const products = pgTable("products", {
+  id: text("id").primaryKey().notNull(),
+  active: boolean("active"),
+  name: text("name"),
+  description: text("description"),
+  image: text("image"),
+  metadata: jsonb("metadata"),
+});
+
 export const subscriptions = pgTable("subscriptions", {
   id: text("id").primaryKey().notNull(),
   userId: uuid("user_id").notNull(),
   status: subscriptionStatus("status"),
   metadata: jsonb("metadata"),
-  priceId: text("price_id")
-    .references(() => prices.id)
-    .references(() => prices.id),
+  priceId: text("price_id").references(() => prices.id),
   quantity: integer("quantity"),
   cancelAtPeriodEnd: boolean("cancel_at_period_end"),
   created: timestamp("created", { withTimezone: true, mode: "string" })
@@ -187,3 +201,27 @@ export const subscriptions = pgTable("subscriptions", {
     mode: "string",
   }).default(sql`now()`),
 });
+
+export const collaborators = pgTable("collaborators", {
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+});
+
+export const productsRelations = relations(products, ({ many }) => ({
+  prices: many(prices),
+}));
+
+export const pricesRelations = relations(prices, ({ one }) => ({
+  product: one(products, {
+    fields: [prices.productId],
+    references: [products.id],
+  }),
+}));
