@@ -1,9 +1,8 @@
 "use client";
-import React, { useState } from "react";
 import { AuthUser } from "@supabase/supabase-js";
+import React, { useState } from "react";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { v4 } from "uuid";
-import { useToast } from "../ui/use-toast";
-import { useRouter } from "next/navigation";
 
 import {
   Card,
@@ -12,16 +11,19 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
+import EmojiPicker from "../global/emoji-picker";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import EmojiPicker from "../global/emoji-picker";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Subscription, workspace } from "@/lib/supabase/supabase.types";
+import { Button } from "../ui/button";
+import Loader from "../global/Loader";
+import { createWorkspace } from "@/lib/supabase/queries";
+import { useToast } from "../ui/use-toast";
+import { useRouter } from "next/navigation";
+import { useAppState } from "@/lib/providers/state-provider";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { CreateWorkspaceFormSchema } from "@/lib/types";
 import { z } from "zod";
-import { Subscription, workspace } from "@/lib/supabase/supabase.types";
-import { createWorkspace } from "@/lib/supabase/queries";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useAppState } from "@/lib/providers/state-provider";
 
 interface DashboardSetupProps {
   user: AuthUser;
@@ -33,10 +35,10 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   user,
 }) => {
   const { toast } = useToast();
-  const [selectedEmoji, setSelectedEmoji] = useState("💼");
   const router = useRouter();
-  const supabase = createClientComponentClient();
   const { dispatch } = useAppState();
+  const [selectedEmoji, setSelectedEmoji] = useState("💼");
+  const supabase = createClientComponentClient();
   const {
     register,
     handleSubmit,
@@ -119,8 +121,9 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   return (
     <Card
       className="w-[800px]
-  h-screen
-  sm:h-auto"
+      h-screen
+      sm:h-auto
+  "
     >
       <CardHeader>
         <CardTitle>Create A Workspace</CardTitle>
@@ -130,7 +133,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={() => {}}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-4">
             <div
               className="flex
@@ -142,7 +145,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
                   {selectedEmoji}
                 </EmojiPicker>
               </div>
-              <div className="w-full">
+              <div className="w-full ">
                 <Label
                   htmlFor="workspaceName"
                   className="text-sm
@@ -179,7 +182,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
                 type="file"
                 accept="image/*"
                 placeholder="Workspace Name"
-                disabled={isLoading || subscription?.status !== "active"}
+                // disabled={isLoading || subscription?.status !== 'active'}
                 {...register("logo", {
                   required: false,
                 })}
@@ -197,6 +200,11 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
                   To customize your workspace, you need to be on a Pro Plan
                 </small>
               )}
+            </div>
+            <div className="self-end">
+              <Button disabled={isLoading} type="submit">
+                {!isLoading ? "Create Workspace" : <Loader />}
+              </Button>
             </div>
           </div>
         </form>
